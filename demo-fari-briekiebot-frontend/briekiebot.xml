@@ -1,0 +1,76 @@
+<mujoco model="cassie">
+  <include file="lite6_gripper_wide.xml"/>
+  <compiler meshdir="assets" texturedir="assets" autolimits="true"/>
+  <extension>
+    <plugin plugin="mujoco.elasticity.cable"/>
+  </extension>
+  <visual>
+    <global offwidth="1920" offheight="1080"/>
+  </visual>
+  <option timestep="0.001"/>
+  <!-- Timestep is set to 0.0005 because the standard Cassie controller runs at 2 kHz -->
+  <!-- Larger values still have stable dynamics -->
+
+  <default>
+    <geom contype="0" conaffinity="0" condim="1" solref="0.005 1"/>
+    <equality solref="0.005 1"/>
+  </default>
+
+  <asset>
+    <mesh name="crane_body"         scale="0.001 0.001 0.001" file="crane_body.stl"/>
+    <mesh name="end_effector"       scale="0.001 0.001 0.001" file="end_effector.stl"/>
+    <mesh name="rails"              scale="0.001 0.001 0.001" file="rails.stl"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3"
+     rgb2=".2 .3 .4" width="300" height="300"/>
+    <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
+  </asset>
+
+  <worldbody>
+    <geom size="2 2 .01" type="plane" material="grid"/>
+    <site name="target" pos="0 0 0" size="0.02" rgba="1 0 0 1"/>
+    <light pos="0 0 2" castshadow="false"/>
+    <body name="brick" pos="0.6 0 0.692">
+        <joint type="free" damping="0.005"/>
+        <geom name="weight1" type="box" size=".015 .015 .015" contype="1" conaffinity="1"/>
+    </body>
+    <body name="shaft_structure">
+      <body name="rails" pos="0 0 0">
+        <geom type="mesh" mesh="rails"/>
+      </body>
+      <body name="crane_body" pos="0 0 0">
+        
+        <joint name="y_slide" type="slide" axis="1 0 0" damping="10" />
+        <geom name="crane_body_geom" type="mesh" mesh="crane_body"/>
+        <body name="end_effector" pos="0 0 0">
+          <joint name="x_slide" type="slide" axis="0 1 0" damping="10" />
+          <geom type="mesh" mesh="end_effector"/>
+            <composite type="cable" curve="s" count="50 1 1" size="0.6" offset="0 0 0.692" initial="none">
+            <plugin plugin="mujoco.elasticity.cable">
+            <!--Units are in Pa (SI)-->
+              <config key="twist" value="1e7"/>
+              <config key="bend" value="0"/>
+              <config key="vmax" value="0.05"/>
+            </plugin>
+            <joint kind="main" damping=".015"/>
+            <geom type="capsule" size=".001" rgba=".8 .2 .1 1" condim="1"/>
+            </composite>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <intvelocity name="y" joint="y_slide" kp="1000" kv="100" actrange="-2 2" ctrllimited="true" ctrlrange="-0.1 0.1"/>
+    <intvelocity name="x" joint="x_slide" kp="1000" kv="100" actrange="-2 2" ctrllimited="true" ctrlrange="-0.1 0.1"/>
+  </actuator>
+
+
+  <equality>
+    <connect name="right_boundary" body1="B_last" body2="brick" anchor="0 0 0"/>
+  </equality>
+  <contact>
+    <exclude body1="B_last" body2="brick"/>
+    <exclude body1="rails" body2="crane_body"/>
+  </contact>
+
+
+</mujoco>
