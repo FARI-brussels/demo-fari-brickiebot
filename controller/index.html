@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Joystick Control</title>
+<style>
+  .joystick-container {
+    width: 200px; height: 200px; background: #eee; border-radius: 50%;
+    margin: 20px; position: relative; overflow: hidden;
+  }
+  .joystick-handle {
+    width: 40px; height: 40px; background: #333; border-radius: 50%;
+    position: absolute; top: 80px; left: 80px;
+    touch-action: none; /* for better touch handling */
+  }
+</style>
+</head>
+<body>
+  <h1>Joystick Controls</h1>
+  <p>X/Y Joystick:</p>
+  <div id="xy-container" class="joystick-container">
+    <div id="xy-handle" class="joystick-handle"></div>
+  </div>
+
+  <p>Z Joystick (Vertical):</p>
+  <div id="z-container" class="joystick-container">
+    <div id="z-handle" class="joystick-handle"></div>
+  </div>
+
+<script>
+  let ws = new WebSocket("ws://localhost:8765");
+
+  // For simplicity, just track the handle movements relative to center
+  const xyContainer = document.getElementById('xy-container');
+  const xyHandle = document.getElementById('xy-handle');
+
+  const zContainer = document.getElementById('z-container');
+  const zHandle = document.getElementById('z-handle');
+
+  let xyCenterX = xyContainer.offsetWidth / 2;
+  let xyCenterY = xyContainer.offsetHeight / 2;
+
+  let zCenterX = zContainer.offsetWidth / 2;
+  let zCenterY = zContainer.offsetHeight / 2;
+
+  let draggingXY = false;
+  let draggingZ = false;
+
+  // Normalize a value so that the radius (100px from center) maps -1 to 1
+  function normalize(value, maxDist=100) {
+    let val = value / maxDist;
+    if (val > 1) val = 1;
+    if (val < -1) val = -1;
+    return val;
+  }
+
+  // Event handlers for XY joystick
+  xyHandle.addEventListener('pointerdown', (e) => {
+    draggingXY = true;
+    e.target.setPointerCapture(e.pointerId);
+  });
+  xyHandle.addEventListener('pointerup', (e) => {
+    draggingXY = false;
+    xyHandle.style.left = xyCenterX - 20 + "px";
+    xyHandle.style.top = xyCenterY - 20 + "px";
+    sendJoystickData(0,0,zVal);
+  });
+  xyHandle.addEventListener('pointermove', (e) => {
+    if (!draggingXY) return;
+    let rect = xyContainer.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    let dx = x - xyCenterX;
+    let dy = y - xyCenterY;
+
+    let dist = Math.sqrt(dx*dx + dy*dy);
+    let maxDist = 80; // limit handle movement
+    if (dist > maxDist) {
+      dx = (dx/dist)*maxDist;
+      dy = (dy/dist)*maxDist;
+    }
+
+    xyHandle.style.left = (xyCenterX + dx - 20) + "px";
+    xyHandle.style.top = (xyCenterY + dy - 20) + "px";
+
+    xVal = normalize(dx, maxDist);
+    yVal = normalize(-dy, maxDist); // invert Y for intuitive up-down
+    console.log(xVal, yVal, zVal);
+    sendJoystickData(xVal,yVal,zVal);
+  });
+
+  // Event handlers for Z joystick (vertical only)
+  let zVal = 0;
+  zHandle.addEventListener('pointerdown', (e) => {
+    draggingZ = true;
+    e.target.setPointerCapture(e.pointerId);
+  });
+  zHandle.addEventListener('pointerup', (e) => {
+    draggingZ = false;
+    zHandle.style.left = zCenterX - 20 + "px";
+    zHandle.style.top = zCenterY - 20 + "px";
+    zVal = 0;
+    sendJoystickData(xVal,yVal,zVal);
+  });
+  zHandle.addEventListener('pointermove', (e) => {
+    if (!draggingZ) return;
+    let rect = zContainer.getBoundingClientRect();
+    let x = e.clientX - rect.left;
+    let y = e.clientY - rect.top;
+
+    let dx = x - zCenterX;
+    let dy = y - zCenterY;
+
+    // For Z, we only consider vertical movement
+    let maxDist = 80;
+    if (dy > maxDist) dy = maxDist;
+    if (dy < -maxDist) dy = -maxDist;
+
+    zHandle.style.left = (zCenterX - 20) + "px"; // no horizontal movement
+    zHandle.style.top = (zCenterY + dy - 20) + "px";
+
+    zVal = normalize(-dy, maxDist); // invert for consistency
+    sendJoystickData(xVal,yVal,zVal);
+  });
+
+  let xVal = 0, yVal = 0; // track latest X/Y values
+
+  function sendJoystickData(x,y,z) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      let data = {x: x, y: y, z: z};
+      ws.send(JSON.stringify(data));
+    }
+  }
+
+  ws.onopen = () => {
+    console.log("WebSocket connected");
+  };
+  ws.onerror = (err) => {
+    console.error("WebSocket error", err);
+  };
+</script>
+</body>
+</html>
