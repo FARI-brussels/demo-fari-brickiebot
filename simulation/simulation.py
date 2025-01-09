@@ -14,9 +14,10 @@ class MujocoSimulation:
     def setup_simulation(self):
         """Initialize MuJoCo simulation"""
         print("Setting up MuJoCo simulation...")  # This will be captured
-        self.model = mujoco.MjModel.from_xml_path("/home/mrcyme/Documents/FARI/repositories/demo-fari-brickiebot/simulation/briekiebot.xml")
+        self.model = mujoco.MjModel.from_xml_path("/home/fari/Documents/demo-fari-brickiebot/simulation/briekiebot.xml")
         self.data = mujoco.MjData(self.model)
-        self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
+        self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_right_ui=False, show_left_ui=False)
+        print(dir(self.viewer))
         print("Simulation initialized successfully")  # This will be captured
         self.lite6_mujoco = self.model.body('link_base')
         self.lite6_mujoco.pos = [-0.3, 0, 0]
@@ -39,7 +40,7 @@ class MujocoSimulation:
             z_step = (cmd_data >> 4) & 1
             z_dir = (cmd_data >> 5) & 1
             
-            step_size = 0.001
+            step_size = 0.002
             print(x_step, y_step, z_step)
             v = [0.0, 0.0, 0.0]
             if x_step:
