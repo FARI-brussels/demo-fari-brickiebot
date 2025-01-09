@@ -29,26 +29,36 @@
   <size memory="2M"/>
 
   <worldbody>
-    <body name="slider" pos=".7 0 .6">
+    <body name="slider" pos="4 0 0.1">
         <joint type="free" damping="0.1"/>
         <geom name="weight1" type="box" size=".1 .1 .1" mass="0.1"/>
     </body>
-    <composite type="cable" curve="s" count="41 1 1" size="1" offset="-.3 0 .6" initial="none">
-      <plugin plugin="mujoco.elasticity.cable">
-        <!--Units are in Pa (SI)-->
-        <config key="twist" value="1e7"/>
-        <config key="bend" value="4e6"/>
-        <config key="vmax" value="0.05"/>
-      </plugin>
-      <joint kind="main" damping=".015"/>
-      <geom type="capsule" size=".005" rgba=".8 .2 .1 1" condim="1"/>
-    </composite>
+    <body name="shaft" pos="0 0 0">
+        <joint name="shaftj" axis="0 1 0"/>
+        <geom name="cylinder" type="cylinder" size="0.1 0.3" mass="0.1" euler="90 0 0"/>
+        <composite type="cable" curve="s" count="50 1 1" size="4" offset="0 0 0.1" initial="none">
+          <plugin plugin="mujoco.elasticity.cable">
+            <!--Units are in Pa (SI)-->
+            <config key="twist" value="1e7"/>
+            <config key="bend" value="4e6"/>
+            <config key="vmax" value="0.05"/>
+          </plugin>
+          <joint kind="main" damping=".015"/>
+          <geom type="capsule" size=".005" rgba=".8 .2 .1 1" condim="1"/>
+        </composite>
     
+    </body>
+    
+   
   </worldbody>
   <equality>
     <connect name="right_boundary" body1="B_last" body2="slider" anchor=".025 0 0"/>
+    <connect name="left_boundary" body1="B_first" body2="shaft" anchor="0.1 0 0"/>
   </equality>
   <contact>
     <exclude body1="B_last" body2="slider"/>
   </contact>
+  <actuator>
+    <position joint="shaftj" ctrllimited="true" ctrlrange="-100 100"/>
+  </actuator>
 </mujoco>
