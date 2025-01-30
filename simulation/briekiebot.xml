@@ -1,6 +1,7 @@
 <mujoco model="cassie">
   <include file="lite6_gripper_wide.xml"/>
   <compiler meshdir="assets" texturedir="assets" autolimits="true" angle="degree"/>
+  <option integrator="implicitfast"/>
   <extension>
     <plugin plugin="mujoco.elasticity.cable"/>
   </extension>
@@ -20,6 +21,13 @@
     <mesh name="crane_body"         scale="0.001 0.001 0.001" file="crane_body.stl"/>
     <mesh name="end_effector"       scale="0.001 0.001 0.001" file="end_effector.stl"/>
     <mesh name="rails"              scale="0.001 0.001 0.001" file="rails.stl"/>
+    <mesh name="bent_stripe"         scale="0.001 0.001 0.001" file="clamp/stripe_jaw.stl"/>
+    <mesh name="latte1"              scale="0.001 0.001 0.001" file="clamp/latte1.stl"/>
+    <mesh name="latte2"              scale="0.001 0.001 0.001" file="clamp/latte2.stl"/>
+    <material name="blue_" rgba="0 0 1 1" />
+    <material name="green" rgba="0 1 0 1" />
+    <material name="red__" rgba="1 0 0 1" />
+    <material name="white__" rgba="1 1 1 1" />
     <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3"
      rgb2=".2 .3 .4" width="300" height="300"/>
     <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
@@ -29,36 +37,50 @@
     <geom size="2 2 .01" type="plane" material="grid"/>
     <site name="target" pos="0 0 0" size="0.02" rgba="1 0 0 1"/>
     <light pos="0 0 2" castshadow="false"/>
-    <body name="brick" pos="0.6 0 0.695">
+
+    <body name="link_1" pos="0.5 0.055 0.695">
         <joint type="free" damping="0.005"/>
-        <geom name="weight1" type="box" size=".015 .015 .015" contype="1" conaffinity="1"/>
-    </body>
+        <geom type="mesh" mesh="latte1" pos="0 0 0" euler="0 90 0" material="white__" />
+            <body name="link_2" pos="0.005 0 -0.04" euler="0 0 0">
+                <joint name="hinge_1" pos="0 0 0" axis="1 0 0" damping="1"/>
+                <geom type="mesh" mesh="bent_stripe" pos="0 0.08 0" euler="0 90 90" material="white__" />
+                <body name="link_3" pos="-0.005 0.04 0" euler="0 0 0">
+                    <joint name="hinge_2" pos="0 0.04 0"  axis="1 0 0" damping="1"/>
+                    <geom type="mesh" mesh="bent_stripe" pos="0 0.04 0" euler="0 -90 180" material="white__" />
+                    <body name="link_4" pos="0.005 0 0.04" euler="0 0 0">
+                        <joint name="hinge_3" pos="0 0.04 0.04" axis="1 0 0" damping="1"/>
+                        <geom type="mesh" mesh="latte1" pos="0 0 0.04" euler="90 90 0" material="white__" />
+                    </body>
+                </body>
+            </body>
+      </body>
+
     <body name="shaft_structure">
       <body name="rails" pos="0 0 0">
         <geom type="mesh" mesh="rails"/>
       </body>
       <body name="crane_body" pos="0 0 0">
         
-        <joint name="y_slide" type="slide" axis="1 0 0" damping="10" />
+        <joint name="y_slide" type="slide" axis="0 1 0" damping="10" />
         <geom name="crane_body_geom" type="mesh" mesh="crane_body"/>
         <body name="end_effector" pos="0 0 0">
-          <joint name="x_slide" type="slide" axis="0 1 0" damping="10" />
+          <joint name="x_slide" type="slide" axis="1 0 0" damping="100" />
           <geom type="mesh" mesh="end_effector"/>
           
           <body name="shaft" pos="0 0.04 0.695">
-            <joint name="z_up" axis="0 1 0"/>
-            <geom name="cylinder" type="cylinder" pos="0 0 0" size="0.03 0.01" mass="0.1" euler="90 0 0" contype="1" conaffinity="1" condim="3"/>
-            <geom name="cylinder2" type="cylinder" pos="0 0.01 0" size="0.04 0.002" mass="0.1" euler="90 0 0" contype="1" conaffinity="1"/>
-            <geom name="cylinder4" type="cylinder" pos="0 -0.01 0" size="0.04 0.002" mass="0.1" euler="90 0 0" contype="1" conaffinity="1"/>
-            <composite type="cable" curve="s" count="50 1 1" size="0.6" offset="0 0 0.03" initial="none">
+            <joint name="z_up" axis="0 1 0" damping="10"/>
+            <geom name="cylinder" type="cylinder" pos="0 0 0" size="0.03 0.02" mass="0.1" euler="90 0 0" contype="1" conaffinity="1" condim="1"/>
+            <geom name="cylinder2" type="cylinder" pos="0 0.02 0" size="0.04 0.002" mass="0.1" euler="90 0 0" contype="1" conaffinity="1"/>
+            <geom name="cylinder4" type="cylinder" pos="0 -0.02 0" size="0.04 0.002" mass="0.1" euler="90 0 0" contype="1" conaffinity="1"/>
+            <composite type="cable" curve="s" count="60 1 1" size="0.5" offset="0 0.015 0.03" initial="none">
               <plugin plugin="mujoco.elasticity.cable">
                 <!--Units are in Pa (SI)-->
-                <config key="twist" value="1e7"/>
+                <config key="twist" value="0"/>
                 <config key="bend" value="0"/>
-                <config key="vmax" value="0.05"/>
+                <config key="vmax" value="0"/>
               </plugin>
               <joint kind="main" damping=".015"/>
-              <geom type="capsule" size=".001" rgba=".8 .2 .1 1" condim="1"/>
+              <geom type="capsule" size=".003" rgba=".8 .2 .1 1" condim="1"/>
             </composite>
             </body>
         </body>
@@ -68,17 +90,25 @@
   <actuator>
     <intvelocity name="y" joint="y_slide" kp="1000" kv="100" actrange="-2 2" ctrllimited="true" ctrlrange="-0.1 0.1"/>
     <intvelocity name="x" joint="x_slide" kp="1000" kv="100" actrange="-2 2" ctrllimited="true" ctrlrange="-0.1 0.1"/>
-    <position joint="z_up" ctrllimited="true" ctrlrange="-5 5"/>
+    <intvelocity name="z" joint="z_up" kp="1000" kv="100" actrange="-10 10" ctrllimited="true" ctrlrange="-10 10"/>
+    <position joint="hinge_1" kp="10" kv="2" name="actuator_motor" ctrlrange="-2 1" ctrllimited="true"/>
   </actuator>
 
 
   <equality>
-    <connect name="right_boundary" body1="B_last" body2="brick" anchor="0 0 0"/>
+    <connect name="right_boundary" body1="B_last" body2="link_1" anchor="0 0 0"/>
     <connect name="left_boundary" body1="B_first" body2="shaft" anchor="0 0 0"/>
+    <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 0.04" />
   </equality>
   <contact>
-    <exclude body1="B_last" body2="brick"/>
+    <exclude body1="B_last" body2="link_1"/>
     <exclude body1="rails" body2="crane_body"/>
+    <exclude body1="link_1" body2="link_2"/>
+    <exclude body1="link_1" body2="link_3"/>
+    <exclude body1="link_1" body2="link_4"/>
+    <exclude body1="link_2" body2="link_3"/>
+    <exclude body1="link_2" body2="link_4"/>
+    <exclude body1="link_3" body2="link_4"/>
   </contact>
 
 

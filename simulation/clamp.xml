@@ -1,47 +1,53 @@
 <mujoco>
-    <compiler autolimits="true" meshdir="assets/clamp"/>
+    <compiler autolimits="true"/>
     <!--
     <option gravity="0 0 0" timestep="0.002" />
     -->
-    <option gravity="0 0 0" timestep="0.002" />
-
-    
-    <size memory="2M"/>
-    <extension>
-        <plugin plugin="mujoco.elasticity.cable"/>
-    </extension>
+    <option gravity="0 0 -9" timestep="0.002" />
     <asset>
         <material name="blue_" rgba="0 0 1 1" />
         <material name="green" rgba="0 1 0 1" />
         <material name="red__" rgba="1 0 0 1" />
-        <material name="white" rgba="1 1 1 1" />
-        <mesh name="bent_stripe"         scale="0.1 0.1 0.1" file="bent_stripe.stl"/>
-        <mesh name="jaw"       scale="0.001 0.001 0.001" file="jaw.stl"/>
-        <mesh name="latte1"              scale="0.1 0.1 0.1" file="latte1.stl"/>
-        <mesh name="latte2"              scale="0.1 0.1 0.1" file="latte2.stl"/>
+        <material name="white__" rgba="1 1 1 1" />
+        <mesh name="bent_stripe"         scale="0.001 0.001 0.001" file="assets/clamp/stripe_jaw.stl"/>
+        <mesh name="latte1"              scale="0.001 0.001 0.001" file="assets/clamp/latte1.stl"/>
+        <mesh name="latte2"              scale="0.001 0.001 0.001" file="assets/clamp/latte2.stl"/>
     </asset>
     <worldbody>
-        <body name="hook" pos="0 0 0">
-            <site name="hook" pos="0 0 8" size="0.1" rgba="1 0 0 1"/>
-            <joint pos="0 0 8" axis="1 0 0" damping="5"/>
-            <body name="link_1" >
-                <geom type="mesh" mesh="latte1" pos="0 0 4" euler="0 90 0" material="red__" />
-                <body name="link_2" pos="0.5 0 0" euler="0 0 0">
-                    <joint name="hinge_1" pos="0 0 0" axis="1 0 0" />
-                    <geom type="mesh" mesh="bent_stripe" pos="0 8 0" euler="0 90 90" material="blue_" />
-                    <body name="link_3" pos="-0.5 4 0" euler="0 0 0">
-                        <joint name="hinge_2" pos="0 4 8" axis="1 0 0" />
-                        <geom type="mesh" mesh="bent_stripe" pos="0 4 0" euler="0 -90 180" material="blue_" />
-                        <body name="link_4" pos="0.5 0 4" euler="0 0 0">
-                            <joint name="hinge_3" pos="0 4 -4" axis="1 0 0" />
-                            <geom type="mesh" mesh="latte1" pos="0 0 4" euler="90 90 0" material="white" />
-                        </body>
+        <body name="link_1" >
+            <geom type="mesh" mesh="latte1" pos="0 0 0" euler="0 90 0" material="red__" />
+            <body name="link_2" pos="0.005 0 -0.04" euler="0 0 0">
+                <joint name="hinge_1" pos="0 0 0" axis="1 0 0" damping="10"/>
+                <geom type="mesh" mesh="bent_stripe" pos="0 0.08 0" euler="0 90 90" material="blue_" />
+                <body name="link_3" pos="-0.005 0.04 0" euler="0 0 0">
+                    <joint name="hinge_2" pos="0 0.04 0"  axis="1 0 0" damping="10"/>
+                    <geom type="mesh" mesh="bent_stripe" pos="0 0.04 0" euler="0 -90 180" material="blue_" />
+                    <body name="link_4" pos="0.005 0 0.04" euler="0 0 0">
+                        <joint name="hinge_3" pos="0 0.04 0.04" axis="1 0 0" damping="10"/>
+                        <geom type="mesh" mesh="latte1" pos="0 0 0.04" euler="90 90 0" material="white__" />
                     </body>
                 </body>
             </body>
         </body>
+
     </worldbody>
     <equality>
-        <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 8" />
+        <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 0.04" />
     </equality>
+    <actuator>
+        <position joint="hinge_2" kp="10" kv="2" name="actuator_motor" ctrlrange="-2 1" ctrllimited="true"/>
+    </actuator>
+    <contact>
+        <exclude body1="link_1" body2="link_2"/>
+        <exclude body1="link_1" body2="link_3"/>
+        <exclude body1="link_1" body2="link_4"/>
+        <exclude body1="link_2" body2="link_3"/>
+        <exclude body1="link_2" body2="link_4"/>
+        <exclude body1="link_3" body2="link_4"/>
+    </contact>
+
+
+
 </mujoco>
+
+

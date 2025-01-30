@@ -201,23 +201,27 @@ export default function MachineControl() {
                 />
               </div>
               <div className="w-24 h-48 flex flex-col items-center justify-center ml-8">
-                <span className="mb-2">Z Axis</span>
-                <div className="h-40 flex items-center">
-                  <input
-                    type="range"
-                    value={zPosition}
-                    onChange={handleZChange}
-                    min="-100"
-                    max="100"
-                    step="1"
-                    className="w-2 h-40 appearance-none bg-slate-200 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transform rotate-180"
-                    style={{
-                      WebkitAppearance: 'slider-vertical'
-                    }}
-                    disabled={!connected || !enabled || isHoming}
-                  />
+              <div className="w-24 h-48 flex flex-col items-center justify-center ml-8">
+                  <span className="mb-2">Z Axis</span>
+                  <div className="h-40 flex items-center">
+                    <input
+                      type="range"
+                      value={zPosition}
+                      onChange={handleZChange}
+                      min="-100"
+                      max="100"
+                      step="1"
+                      className="w-2 h-40 appearance-none bg-slate-200 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transform rotate-180"
+                      style={{
+                        WebkitAppearance: 'slider-vertical',
+                      }}
+                      disabled={!connected || !enabled || isHoming}
+                      onMouseUp={() => setZPosition(0)} // Reset to zero when mouse interaction stops
+                      onMouseLeave={() => setZPosition(0)} // Reset to zero when cursor leaves slider
+                    />
+                  </div>
+                  <span className="mt-2">{zPosition}</span>
                 </div>
-                <span className="mt-2">{zPosition}</span>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">

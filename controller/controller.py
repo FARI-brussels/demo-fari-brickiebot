@@ -4,7 +4,7 @@ import time
 class StepperController:
     def __init__(self, port='/dev/ttyACM0', baud_rate=115200):
         # Motor configuration
-        self.STEPS_PER_REVOLUTION = 8000  # Standard for many stepper motors, adjust as needed
+        self.STEPS_PER_REVOLUTION = 3000  # Standard for many stepper motors, adjust as needed
         self.STEP_DELAY = 0.0005  # Delay between steps in seconds
         
         # Command bit masks
@@ -32,38 +32,43 @@ class StepperController:
         """Rotate a specific axis by given number of steps"""
         # Set direction
         command = dir_bit if clockwise else 0
+        print(command)
         self.send_command(command)
         
         # Perform steps
         for _ in range(steps):
             # Step high
+            
             command = dir_bit | step_bit if clockwise else step_bit
+            print(command)
             self.send_command(command)
             
             # Step low (reset step bit)
             command = dir_bit if clockwise else 0
+            print(command)
             self.send_command(command)
 
     def rotate_all_axes(self):
         """Perform one revolution on each axis sequentially"""
         try:
-            """            # X axis revolution
+                      # X axis revolution
+            
             print("Rotating X axis...")
             self.rotate_axis(self.X_STEP, self.X_DIR, self.STEPS_PER_REVOLUTION)
             time.sleep(0.5)  # Pause between axes
-            """
             """
             # Y axis revolution
             print("Rotating Y axis...")
             self.rotate_axis(self.Y_STEP, self.Y_DIR, self.STEPS_PER_REVOLUTION)
             time.sleep(0.5)
 
-            """
+            
+
             # Z axis revolution
             print("Rotating Z axis...")
             self.rotate_axis(self.Z_STEP, self.Z_DIR, self.STEPS_PER_REVOLUTION)
             
-            
+            """
             print("All rotations completed!")
             
         except Exception as e:

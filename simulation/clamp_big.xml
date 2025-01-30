@@ -1,0 +1,50 @@
+<mujoco>
+    <compiler autolimits="true"/>
+    <!--
+    <option gravity="0 0 0" timestep="0.002" />
+    -->
+    <option gravity="0 0 -9" timestep="0.002" />
+
+    
+    <size memory="2M"/>
+    <extension>
+        <plugin plugin="mujoco.elasticity.cable"/>
+    </extension>
+    <asset>
+        <material name="blue_" rgba="0 0 1 1" />
+        <material name="green" rgba="0 1 0 1" />
+        <material name="red__" rgba="1 0 0 1" />
+        <material name="white__" rgba="1 1 1 1" />
+        <mesh name="bent_stripe"         scale="0.1 0.1 0.1" file="assets/clamp/stripe_jaw.stl"/>
+        <mesh name="latte1"              scale="0.1 0.1 0.1" file="assets/clamp/latte1.stl"/>
+        <mesh name="latte2"              scale="0.1 0.1 0.1" file="assets/clamp/latte2.stl"/>
+    </asset>
+    <worldbody>
+        <body name="link_1" >
+            <joint name="top_link" pos="0 0 8" axis="1 0 0" frictionloss='1' damping="1000"/>
+            <geom type="mesh" mesh="latte1" pos="0 0 4" euler="0 90 0" material="red__" />
+            <body name="link_2" pos="0.5 0 0" euler="0 0 0">
+                <joint name="hinge_1" pos="0 0 0" axis="1 0 0" damping="100"/>
+                <geom type="mesh" mesh="bent_stripe" pos="0 8 0" euler="0 90 90" material="blue_" />
+                <body name="link_3" pos="-0.5 4 0" euler="0 0 0">
+                    <joint name="hinge_2" pos="0 4 0"  axis="1 0 0" damping="1"/>
+                    <geom type="mesh" mesh="bent_stripe" pos="0 4 0" euler="0 -90 180" material="blue_" />
+                    <body name="link_4" pos="0.5 0 4" euler="0 0 0">
+                        <joint name="hinge_3" pos="0 4 4" axis="1 0 0" damping="1000"/>
+                        <geom type="mesh" mesh="latte1" pos="0 0 4" euler="90 90 0" material="white__" />
+                    </body>
+                </body>
+            </body>
+        </body>
+
+    </worldbody>
+    <equality>
+        <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 8" />
+    </equality>
+    <actuator>
+        <position joint="hinge_2" kp="10000000000" kv="100000000" name="actuator_motor" ctrlrange="-2 1" ctrllimited="true"/>
+    </actuator>
+
+</mujoco>
+
+

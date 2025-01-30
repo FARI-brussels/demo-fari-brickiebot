@@ -5,6 +5,36 @@ import numpy as np
 import time
 import sys
 
+
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+
+def rotate_y(quat, angle_deg):
+    # Convert angle to radians
+    angle_rad = np.radians(angle_deg) / 2
+
+    # Incremental quaternion for Y-axis rotation
+    q_increment = np.array([
+        np.cos(angle_rad),  # w
+        0,                  # x
+        np.sin(angle_rad),  # y
+        0                   # z
+    ])
+
+    # Multiply quaternions: q_new = q_increment * q_current
+    w1, x1, y1, z1 = q_increment
+    w2, x2, y2, z2 = quat
+
+    q_new = np.array([
+        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,  # w
+        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,  # x
+        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,  # y
+        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2   # z
+    ])
+
+    return q_new
+
+
 class MujocoSimulation:
     def __init__(self, command_queue, status_queue):
         self.command_queue = command_queue
@@ -16,7 +46,7 @@ class MujocoSimulation:
         print("Setting up MuJoCo simulation...")  # This will be captured
         self.model = mujoco.MjModel.from_xml_path("/home/fari/Documents/demo-fari-brickiebot/simulation/briekiebot.xml")
         self.data = mujoco.MjData(self.model)
-        self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_right_ui=False, show_left_ui=False)
+        self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_right_ui=True, show_left_ui=False)
         print(dir(self.viewer))
         print("Simulation initialized successfully")  # This will be captured
         self.lite6_mujoco = self.model.body('link_base')
@@ -41,19 +71,20 @@ class MujocoSimulation:
             z_dir = (cmd_data >> 5) & 1
             
             step_size = 0.002
-            print(x_step, y_step, z_step)
             v = [0.0, 0.0, 0.0]
             if x_step:
                 v[0] = step_size if x_dir else -step_size
             if y_step:
                 v[1] = step_size if y_dir else -step_size
             if z_step:
-                v[2] = step_size if z_dir else -step_size
+                v[2] = 2 if z_dir else -2
             
-            print(f"Applying velocities: {v}")  # This will be captured
-            self.data.ctrl[-2:] = [v[0], v[1]]
-            self.model.body('crane_body').pos += [v[1], 0, 0]
-            self.model.body('end_effector').pos += [0, v[0], 0]
+            #print(f"Applying velocities: {v}")  # This will be captured
+            self.data.ctrl[-3:] = [v[0], v[1], v[2]]
+            self.model.body('crane_body').pos += [0, v[1], 0]
+            self.model.body('end_effector').pos += [v[0], 0, 0]
+            self.model.body("shaft").quat = rotate_y(self.model.body('shaft').quat, angle_deg=v[2])
+
     
     def run(self):
         """Main simulation loop"""

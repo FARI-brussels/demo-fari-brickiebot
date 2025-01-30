@@ -41,6 +41,7 @@ class SimulationLogger:
                 
                 websockets -= disconnected_sockets
             except queue.Empty:
+                print("svraaa")
                 await asyncio.sleep(0.1)
 
     def stop(self):
@@ -55,6 +56,7 @@ class MachineController:
         self.mode = mode
         self.active_websockets: Set[WebSocket] = set()
         self.running = True
+        self.pos = [0, 0, 0]
         
         if self.mode == ControlMode.HARDWARE:
             try:
@@ -108,7 +110,6 @@ class MachineController:
             try:
                 if pipe.poll(0.1):  # Check for data with timeout
                     message = pipe.recv()
-                    print(message)
                     self.sim_logger.log_queue.put(message)
             except Exception as e:
                 print(f"Error reading simulation output: {e}")
@@ -250,7 +251,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 y_dir = 1 if message['y'] > 0 else 0
                 z_step = 1 if abs(message['z']) > 0.1 else 0
                 z_dir = 1 if message['z'] > 0 else 0
-                print(x_step, x_dir, y_step, y_dir, z_step, z_dir)
                 cmd_data = (
                     (x_step) |
                     (x_dir << 1) |
