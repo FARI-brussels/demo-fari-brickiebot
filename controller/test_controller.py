@@ -3,7 +3,7 @@ import time
 
 SERIAL_PORT = '/dev/ttyACM0'
 BAUD_RATE = 115200
-STEPS_PER_REV = 2000    # Adjust based on your stepper motor and microstepping settings
+STEPS_PER_REV = 1600    # Adjust based on your stepper motor and microstepping settings
 STEP_DELAY = 0.001      # 10ms delay between steps, adjust as needed
 
 # Helper function to construct the command byte
@@ -54,7 +54,7 @@ def main():
 
     # X axis: one revolution backward
     print("X axis: one revolution backward")
-    move_axis(ser, axis='X', steps=STEPS_PER_REV, direction=0)
+    #move_axis(ser, axis='X', steps=STEPS_PER_REV, direction=0)
 
     # Y axis: one revolution forward
     print("Y axis: one revolution forward")

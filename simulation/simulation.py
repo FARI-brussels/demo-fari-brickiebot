@@ -4,6 +4,8 @@ import multiprocessing
 import numpy as np
 import time
 import sys
+import socket
+import struct
 
 
 import numpy as np
@@ -36,10 +38,12 @@ def rotate_y(quat, angle_deg):
 
 
 class MujocoSimulation:
-    def __init__(self, command_queue, status_queue):
-        self.command_queue = command_queue
-        self.status_queue = status_queue
+    def __init__(self):
         self.running = True
+        # Add UDP socket setup
+        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket.bind(('0.0.0.0', 12345))  # Listen on all interfaces
+        self.udp_socket.setblocking(False)  # Non-blocking mode
         
     def setup_simulation(self):
         """Initialize MuJoCo simulation"""
@@ -55,51 +59,41 @@ class MujocoSimulation:
         # Set up camera and initial positions
         self.viewer.cam.trackbodyid = 15
         self.viewer.cam.distance = 2
-        self.viewer.cam.lookat = [0, 0, 0]
-        self.viewer.cam.elevation = -35
-        self.viewer.cam.azimuth = -55
-    
-    def process_command(self, cmd_type, cmd_data):
-        """Process incoming commands"""
-        print(f"Processing command: type={cmd_type}, data={cmd_data}")  # This will be captured
-        if cmd_type == 0x01:  # Movement command
-            x_step = (cmd_data >> 0) & 1
-            x_dir = (cmd_data >> 1) & 1
-            y_step = (cmd_data >> 2) & 1
-            y_dir = (cmd_data >> 3) & 1
-            z_step = (cmd_data >> 4) & 1
-            z_dir = (cmd_data >> 5) & 1
-            
-            step_size = 0.002
-            v = [0.0, 0.0, 0.0]
-            if x_step:
-                v[0] = step_size if x_dir else -step_size
-            if y_step:
-                v[1] = step_size if y_dir else -step_size
-            if z_step:
-                v[2] = 2 if z_dir else -2
-            
-            #print(f"Applying velocities: {v}")  # This will be captured
-            self.data.ctrl[-3:] = [v[0], v[1], v[2]]
-            self.model.body('crane_body').pos += [0, v[1], 0]
-            self.model.body('end_effector').pos += [v[0], 0, 0]
-            self.model.body("shaft").quat = rotate_y(self.model.body('shaft').quat, angle_deg=v[2])
+        self.viewer.cam.lookat = [0, 0, 0.2]
+        self.viewer.cam.elevation = -30
+        self.viewer.cam.azimuth = 90
 
+    def update_position_from_udp(self):
+        """Check for and process any incoming UDP position updates"""
+        try:
+            data, addr = self.udp_socket.recvfrom(12)  # 12 bytes for 3 floats
+            if len(data) == 12:
+                x, y, z = struct.unpack('!fff', data)
+                print(x,y,z)
+                # Update MuJoCo model positions
+                self.model.body('crane_body').pos[1] = y/1000
+                self.model.body('end_effector').pos[0] = -x/1000
+                # For Z, we might need to convert to rotation depending on your setup
+                angle = z * (180.0 / np.pi)  # Convert to degrees if needed
+                self.model.body("shaft").quat = rotate_y(
+                    self.model.body('shaft').quat, 
+                    angle_deg=angle
+                )
+        except BlockingIOError:
+            pass  # No data available
+        except Exception as e:
+            print(f"Error receiving UDP data: {e}")
+    
     
     def run(self):
         """Main simulation loop"""
         try:
             self.setup_simulation()
-            print("Starting simulation loop")  # This will be captured
+            print("Starting simulation loop")
             
             while self.running and self.viewer.is_running():
-                # Process any pending commands
-                while not self.command_queue.empty():
-                    try:
-                        cmd = self.command_queue.get_nowait()
-                        self.process_command(cmd['type'], cmd['data'])
-                    except Exception as e:
-                        print(f"Error processing command: {e}")  # This will be captured
+                # Check for UDP position updates
+                self.update_position_from_udp()
                 
                 # Update simulation
                 mujoco.mj_step(self.model, self.data)
@@ -111,18 +105,20 @@ class MujocoSimulation:
                 except:
                     pass
                 
-                time.sleep(0.001)
+  
         except Exception as e:
-            print(f"Simulation error: {e}")  # This will be captured
+            print(f"Simulation error: {e}")
         finally:
-            print("Simulation ending")  # This will be captured
+            print("Simulation ending")
             if hasattr(self, 'viewer'):
                 self.viewer.close()
+            if hasattr(self, 'udp_socket'):
+                self.udp_socket.close()
 
 
 
 
-def run_simulation(command_queue, status_queue):
+def run_simulation():
     try:
         # Try to reconfigure stdout, but don't fail if it's not possible
         try:
@@ -131,8 +127,11 @@ def run_simulation(command_queue, status_queue):
             pass  # Ignore if reconfigure is not available
             
         print("Simulation process started")
-        sim = MujocoSimulation(command_queue, status_queue)
+        sim = MujocoSimulation()
         sim.run()
         
     except Exception as e:
         print(f"Simulation error: {e}")
+
+
+run_simulation()
