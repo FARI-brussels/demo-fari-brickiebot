@@ -21,13 +21,10 @@
 // Motion parameters
 #define STEPS_PER_REV 1600
 #define MM_PER_REV 40
-#define MAX_X_POSITION_MM 600  // Maximum travel in millimeters
-#define MAX_Y_POSITION_MM 600  // Adjust these values according to your machine
-
-// Center position calculations
-#define CENTER_X_MM (MAX_X_POSITION_MM / 2)  // Half of max X travel
-#define CENTER_Y_MM (MAX_Y_POSITION_MM / 2)  // Half of max Y travel
-
+#define MAX_X_POSITION_MM 300  // Maximum travel in millimeters
+#define MAX_Y_POSITION_MM 400 // Adjust these values according to your machine
+#define X_ENDSTOP_POS -325
+#define Y_ENDSTOP_POS -150
 bool is_homing = false;
 long x_steps = 0;
 long y_steps = 0;
@@ -245,12 +242,12 @@ void performHoming() {
   }
   
   // Reset positions to 0
-  x_steps = 0;
-  y_steps = 0;
+  x_steps = mmToSteps(X_ENDSTOP_POS);
+  y_steps = mmToSteps(Y_ENDSTOP_POS);
   z_steps = 0;
   
   // Move to center position
-  moveToPosition(CENTER_X_MM, CENTER_Y_MM);
+  moveToPosition(0, 0);
   
   is_homing = false;
   sendPosition();
