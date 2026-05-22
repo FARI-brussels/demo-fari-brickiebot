@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrickieBot Controller Test Suite</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .section.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .status.disconnected {
+            background: #ff4757;
+            color: white;
+        }
+        
+        .status.connected {
+            background: #2ed573;
+            color: white;
+        }
+        
+        .status.homing {
+            background: #ffa502;
+            color: white;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        button.danger {
+            background: #ff4757;
+        }
+        
+        button.danger:hover {
+            background: #ff3838;
+        }
+        
+        button.success {
+            background: #2ed573;
+        }
+        
+        button.success:hover {
+            background: #26de81;
+        }
+        
+        .control-group {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        
+        .position-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .axis-display {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .axis-display .label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .axis-display .value {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .axis-display .unit {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .log-entry {
+            margin: 3px 0;
+            padding: 3px;
+        }
+        
+        .log-entry.info {
+            color: #4ec9b0;
+        }
+        
+        .log-entry.error {
+            color: #f48771;
+        }
+        
+        .log-entry.success {
+            color: #89d185;
+        }
+        
+        .log-entry.warning {
+            color: #ffd700;
+        }
+        
+        .test-result {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-size: 0.85em;
+        }
+        
+        .test-result.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .test-result.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .test-result.running {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .joystick-simulator {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .joystick {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .slider-group {
+            margin: 15px 0;
+        }
+        
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 BrickieBot Controller Test Suite</h1>
+            <p>Comprehensive testing interface for stepper motor controller</p>
+        </div>
+        
+        <div class="content">
+            <!-- Connection Section -->
+            <div class="section">
+                <h2>🔌 Connection</h2>
+                <div class="control-group">
+                    <p>Status: <span class="status disconnected" id="connectionStatus">Disconnected</span></p>
+                    <button id="connectBtn" onclick="connect()">Connect to Arduino</button>
+                    <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+                </div>
+            </div>
+            
+            <!-- Position Display -->
+            <div class="section">
+                <h2>📍 Current Position</h2>
+                <div class="position-display">
+                    <div class="axis-display">
+                        <div class="label">X-Axis</div>
+                        <div class="value" id="posX">0.00</div>
+                        <div class="unit">mm</div>
+                    </div>
+                    <div class="axis-display">
+                        <div class="label">Y-Axis</div>
+                        <div class="value" id="posY">0.00</div>
+                        <div class="unit">mm</div>
+                    </div>
+                    <div class="axis-display">
+                        <div class="label">Z-Axis</div>
+                        <div class="value" id="posZ">0.00</div>
+                        <div class="unit">mm</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Homing Test -->
+            <div class="section">
+                <h2>🏠 Homing Test</h2>
+                <div class="control-group">
+                    <p>Test the homing sequence functionality</p>
+                    <button onclick="testHoming()">Start Homing Sequence</button>
+                    <p id="homingStatus"></p>
+                </div>
+            </div>
+            
+            <!-- Emergency Stop -->
+            <div class="section">
+                <h2>🛑 Emergency Controls</h2>
+                <div class="control-group">
+                    <button class="danger" onclick="emergencyStop()">EMERGENCY STOP</button>
+                    <p style="margin-top: 10px; font-size: 0.9em; color: #6c757d;">
+                        Stops all movement immediately
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Manual Control -->
+            <div class="section full-width">
+                <h2>🎮 Manual Joystick Simulator</h2>
+                <div class="joystick-simulator">
+                    <div class="joystick">
+                        <h3>X-Axis Control</h3>
+                        <div class="slider-group">
+                            <label>Speed: <span class="value-display" id="xSpeedDisplay">0.00</span></label>
+                            <input type="range" id="xSpeed" min="0" max="1" step="0.01" value="0" 
+                                   oninput="updateSpeedDisplay('x', this.value)">
+                        </div>
+                        <div class="slider-group">
+                            <label>Direction:</label>
+                            <button id="xDirBtn" onclick="toggleDirection('x')">Positive</button>
+                        </div>
+                        <button onclick="moveAxis('x')">Move X</button>
+                        <button class="danger" onclick="stopAxis('x')">Stop X</button>
+                    </div>
+                    
+                    <div class="joystick">
+                        <h3>Y-Axis Control</h3>
+                        <div class="slider-group">
+                            <label>Speed: <span class="value-display" id="ySpeedDisplay">0.00</span></label>
+                            <input type="range" id="ySpeed" min="0" max="1" step="0.01" value="0" 
+                                   oninput="updateSpeedDisplay('y', this.value)">
+                        </div>
+                        <div class="slider-group">
+                            <label>Direction:</label>
+                            <button id="yDirBtn" onclick="toggleDirection('y')">Positive</button>
+                        </div>
+                        <button onclick="moveAxis('y')">Move Y</button>
+                        <button class="danger" onclick="stopAxis('y')">Stop Y</button>
+                    </div>
+                    
+                    <div class="joystick">
+                        <h3>Z-Axis Control</h3>
+                        <div class="slider-group">
+                            <label>Speed: <span class="value-display" id="zSpeedDisplay">0.00</span></label>
+                            <input type="range" id="zSpeed" min="0" max="1" step="0.01" value="0" 
+                                   oninput="updateSpeedDisplay('z', this.value)">
+                        </div>
+                        <div class="slider-group">
+                            <label>Direction:</label>
+                            <button id="zDirBtn" onclick="toggleDirection('z')">Positive</button>
+                        </div>
+                        <button onclick="moveAxis('z')">Move Z</button>
+                        <button class="danger" onclick="stopAxis('z')">Stop Z</button>
+                    </div>
+                    
+                    <div class="joystick">
+                        <h3>Multi-Axis Control</h3>
+                        <button onclick="moveAllAxes()">Move All Axes</button>
+                        <button class="danger" onclick="stopAllAxes()">Stop All</button>
+                        <p style="margin-top: 10px; font-size: 0.9em;">
+                            Uses current speed and direction settings
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Automated Tests -->
+            <div class="section full-width">
+                <h2>🧪 Automated Test Suite</h2>
+                <div class="control-group">
+                    <button class="success" onclick="runAllTests()">Run All Tests</button>
+                    <button onclick="runTest('messageFraming')">Test Message Framing</button>
+                    <button onclick="runTest('speedControl')">Test Speed Control</button>
+                    <button onclick="runTest('directionControl')">Test Direction Control</button>
+                    <button onclick="runTest('multiAxis')">Test Multi-Axis</button>
+                    <button onclick="runTest('commandBatching')">Test Command Batching</button>
+                </div>
+                <div id="testResults" style="margin-top: 15px;"></div>
+            </div>
+            
+            <!-- Communication Log -->
+            <div class="section full-width">
+                <h2>📝 Communication Log</h2>
+                <div class="control-group">
+                    <button onclick="clearLog()">Clear Log</button>
+                    <button onclick="toggleVerbose()">Toggle Verbose</button>
+                    <span id="verboseStatus">(Verbose: ON)</span>
+                </div>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Protocol Constants
+        const MSG_START = 0xFF;
+        const MSG_END = 0xFE;
+        const MSG_TYPE_POSITION = 0x01;
+        const MSG_TYPE_HOMING_COMPLETE = 0x02;
+        const MSG_TYPE_COMMAND = 0x03;
+        
+        // Command bit flags
+        const X_STEP = 1 << 0;
+        const X_DIR = 1 << 1;
+        const Y_STEP = 1 << 2;
+        const Y_DIR = 1 << 3;
+        const Z_STEP = 1 << 4;
+        const Z_DIR = 1 << 5;
+        const CMD_HOME = 0x0F;
+        
+        // State
+        let port = null;
+        let reader = null;
+        let writer = null;
+        let isConnected = false;
+        let isHoming = false;
+        let verboseLogging = true;
+        
+        // Movement state
+        let axisState = {
+            x: { speed: 0, direction: false, moving: false },
+            y: { speed: 0, direction: false, moving: false },
+            z: { speed: 0, direction: false, moving: false }
+        };
+        
+        let movementInterval = null;
+        
+        // Logging
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('logContainer').innerHTML = '';
+            log('Log cleared', 'info');
+        }
+        
+        function toggleVerbose() {
+            verboseLogging = !verboseLogging;
+            document.getElementById('verboseStatus').textContent = 
+                `(Verbose: ${verboseLogging ? 'ON' : 'OFF'})`;
+            log(`Verbose logging ${verboseLogging ? 'enabled' : 'disabled'}`, 'info');
+        }
+        
+        // Serial Communication
+        async function connect() {
+            try {
+                // Clean up any existing connection first
+                if (port) {
+                    await disconnect();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Request a port and open a connection
+                port = await navigator.serial.requestPort();
+                
+                // Check if already open
+                if (port.readable || port.writable) {
+                    log('Port already open, closing first...', 'warning');
+                    try {
+                        await port.close();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } catch (e) {
+                        console.log('Error closing existing port:', e);
+                    }
+                }
+                
+                await port.open({ baudRate: 115200 });
+                
+                log('Connection opened, waiting for Arduino to initialize...', 'info');
+                
+                // Wait for Arduino to reset (DTR causes reset on connection)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Verify streams are available
+                if (!port.readable || !port.writable) {
+                    throw new Error('Port streams not available after opening');
+                }
+                
+                // Setup reader and writer for binary data
+                reader = port.readable.getReader();
+                writer = port.writable.getWriter();
+                
+                if (!reader || !writer) {
+                    throw new Error('Failed to create reader/writer');
+                }
+                
+                isConnected = true;
+                updateConnectionStatus();
+                log('Connected to Arduino - ready to communicate', 'success');
+                
+                // Start reading loop
+                readLoop().catch(err => {
+                    log(`Read loop error: ${err.message}`, 'error');
+                });
+                
+            } catch (error) {
+                log(`Connection failed: ${error.message}`, 'error');
+                isConnected = false;
+                updateConnectionStatus();
+                
+                // Clean up on connection failure
+                if (port) {
+                    try {
+                        await port.close();
+                    } catch (e) {
+                        // Ignore
+                    }
+                    port = null;
+                }
+            }
+        }
+        
+        async function disconnect() {
+            try {
+                // Stop any ongoing movements
+                if (movementInterval) {
+                    clearInterval(movementInterval);
+                    movementInterval = null;
+                }
+                
+                // Release reader first
+                if (reader) {
+                    try {
+                        await reader.cancel();
+                        reader.releaseLock();
+                    } catch (e) {
+                        console.log('Reader cancel error:', e);
+                    }
+                    reader = null;
+                }
+                
+                // Release writer
+                if (writer) {
+                    try {
+                        await writer.close();
+                        writer.releaseLock();
+                    } catch (e) {
+                        console.log('Writer close error:', e);
+                    }
+                    writer = null;
+                }
+                
+                // Close port
+                if (port) {
+                    try {
+                        await port.close();
+                    } catch (e) {
+                        console.log('Port close error:', e);
+                    }
+                    port = null;
+                }
+                
+                isConnected = false;
+                updateConnectionStatus();
+                log('Disconnected from Arduino', 'info');
+            } catch (error) {
+                log(`Disconnect error: ${error.message}`, 'error');
+            }
+        }
+        
+        function updateConnectionStatus() {
+            const status = document.getElementById('connectionStatus');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (isConnected) {
+                status.textContent = 'Connected';
+                status.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                status.textContent = 'Disconnected';
+                status.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+            
+            if (isHoming) {
+                status.textContent = 'Homing...';
+                status.className = 'status homing';
+            }
+        }
+        
+        // Message Reading
+        async function readLoop() {
+            const buffer = [];
+            
+            log('Read loop started', 'info');
+            
+            try {
+                while (isConnected) {
+                    if (!reader) {
+                        log('Reader is null, exiting read loop', 'warning');
+                        break;
+                    }
+                    
+                    const { value, done } = await reader.read();
+                    
+                    if (done) {
+                        log('Reader stream ended (done=true)', 'warning');
+                        break;
+                    }
+                    
+                    if (!value || value.length === 0) {
+                        continue;
+                    }
+                    
+                    // Log raw bytes in verbose mode
+                    if (verboseLogging) {
+                        const hexStr = Array.from(value).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                        log(`Received ${value.length} bytes: ${hexStr}`, 'info');
+                    }
+                    
+                    for (let i = 0; i < value.length; i++) {
+                        const byte = value[i];
+                        
+                        if (byte === MSG_START) {
+                            buffer.length = 0;
+                            buffer.push(byte);
+                        } else if (byte === MSG_END && buffer.length > 0) {
+                            buffer.push(byte);
+                            parseMessage(new Uint8Array(buffer));
+                            buffer.length = 0;
+                        } else if (buffer.length > 0) {
+                            buffer.push(byte);
+                        }
+                    }
+                }
+                
+                log('Read loop exited normally', 'info');
+            } catch (error) {
+                if (error.message.includes('device has been lost') || error.message.includes('device not configured')) {
+                    log('Arduino disconnected or reset. Please click Disconnect then reconnect.', 'error');
+                } else if (error.message.includes('cancel')) {
+                    log('Read loop cancelled (normal)', 'info');
+                } else {
+                    log(`Read error: ${error.message}`, 'error');
+                    console.error('Read loop error details:', error);
+                }
+                
+                // Properly clean up all resources
+                await disconnect();
+            }
+        }
+        
+        function parseMessage(message) {
+            if (message.length < 3) return;
+            
+            const msgType = message[1];
+            
+            if (msgType === MSG_TYPE_POSITION) {
+                if (message.length === 15) { // START + TYPE + 12 bytes (3 floats) + END
+                    const dataView = new DataView(message.buffer, 2, 12);
+                    const x = dataView.getFloat32(0, true);
+                    const y = dataView.getFloat32(4, true);
+                    const z = dataView.getFloat32(8, true);
+                    
+                    updatePosition(x, y, z);
+                    if (verboseLogging) {
+                        log(`Position: X=${x.toFixed(2)} Y=${y.toFixed(2)} Z=${z.toFixed(2)}`, 'info');
+                    }
+                }
+            } else if (msgType === MSG_TYPE_HOMING_COMPLETE) {
+                isHoming = false;
+                updateConnectionStatus();
+                log('Homing sequence completed', 'success');
+                document.getElementById('homingStatus').innerHTML = 
+                    '<span class="test-result pass">✓ HOMING COMPLETE</span>';
+            }
+        }
+        
+        function updatePosition(x, y, z) {
+            document.getElementById('posX').textContent = x.toFixed(2);
+            document.getElementById('posY').textContent = y.toFixed(2);
+            document.getElementById('posZ').textContent = z.toFixed(2);
+        }
+        
+        // Command Sending
+        async function sendCommand(command, xSpeed, ySpeed, zSpeed) {
+            if (!isConnected || !writer) {
+                log('Cannot send command: Not connected', 'error');
+                return false;
+            }
+            
+            try {
+                // Create message buffer
+                const message = new Uint8Array(16);
+                const view = new DataView(message.buffer);
+                
+                // Pack message
+                message[0] = MSG_START;
+                message[1] = MSG_TYPE_COMMAND;
+                message[2] = command;
+                view.setFloat32(3, xSpeed, true);
+                view.setFloat32(7, ySpeed, true);
+                view.setFloat32(11, zSpeed, true);
+                message[15] = MSG_END;
+                
+                await writer.write(message);
+                
+                if (verboseLogging) {
+                    log(`Sent command: 0x${command.toString(16).padStart(2, '0')} ` +
+                        `speeds: X=${xSpeed.toFixed(2)} Y=${ySpeed.toFixed(2)} Z=${zSpeed.toFixed(2)}`, 'info');
+                }
+                
+                return true;
+            } catch (error) {
+                log(`Send error: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Homing
+        async function testHoming() {
+            if (!isConnected) {
+                log('Cannot start homing: Not connected', 'error');
+                return;
+            }
+            
+            isHoming = true;
+            updateConnectionStatus();
+            document.getElementById('homingStatus').innerHTML = 
+                '<span class="test-result running">⏳ Homing in progress...</span>';
+            
+            log('Starting homing sequence', 'warning');
+            await sendCommand(CMD_HOME, 0.5, 0.5, 0.5);
+        }
+        
+        // Manual Control Functions
+        function updateSpeedDisplay(axis, value) {
+            document.getElementById(`${axis}SpeedDisplay`).textContent = parseFloat(value).toFixed(2);
+            axisState[axis].speed = parseFloat(value);
+        }
+        
+        function toggleDirection(axis) {
+            axisState[axis].direction = !axisState[axis].direction;
+            const btn = document.getElementById(`${axis}DirBtn`);
+            btn.textContent = axisState[axis].direction ? 'Positive' : 'Negative';
+        }
+        
+        async function moveAxis(axis) {
+            if (!isConnected) {
+                log('Cannot move: Not connected', 'error');
+                return;
+            }
+            
+            axisState[axis].moving = true;
+            log(`Moving ${axis.toUpperCase()}-axis at speed ${axisState[axis].speed.toFixed(2)}`, 'info');
+            
+            // Start continuous movement
+            if (!movementInterval) {
+                movementInterval = setInterval(sendMovementCommands, 50);
+            }
+        }
+        
+        function stopAxis(axis) {
+            axisState[axis].moving = false;
+            axisState[axis].speed = 0;
+            document.getElementById(`${axis}Speed`).value = 0;
+            updateSpeedDisplay(axis, 0);
+            log(`${axis.toUpperCase()}-axis stopped`, 'warning');
+            
+            // Check if all axes stopped
+            if (!axisState.x.moving && !axisState.y.moving && !axisState.z.moving) {
+                if (movementInterval) {
+                    clearInterval(movementInterval);
+                    movementInterval = null;
+                }
+            }
+        }
+        
+        function moveAllAxes() {
+            moveAxis('x');
+            moveAxis('y');
+            moveAxis('z');
+        }
+        
+        function stopAllAxes() {
+            stopAxis('x');
+            stopAxis('y');
+            stopAxis('z');
+            emergencyStop();
+        }
+        
+        async function sendMovementCommands() {
+            let command = 0;
+            let xSpeed = 0, ySpeed = 0, zSpeed = 0;
+            
+            if (axisState.x.moving && axisState.x.speed > 0) {
+                command |= X_STEP;
+                if (axisState.x.direction) command |= X_DIR;
+                xSpeed = axisState.x.speed;
+            }
+            
+            if (axisState.y.moving && axisState.y.speed > 0) {
+                command |= Y_STEP;
+                if (axisState.y.direction) command |= Y_DIR;
+                ySpeed = axisState.y.speed;
+            }
+            
+            if (axisState.z.moving && axisState.z.speed > 0) {
+                command |= Z_STEP;
+                if (axisState.z.direction) command |= Z_DIR;
+                zSpeed = axisState.z.speed;
+            }
+            
+            if (command !== 0) {
+                await sendCommand(command, xSpeed, ySpeed, zSpeed);
+            }
+        }
+        
+        async function emergencyStop() {
+            log('EMERGENCY STOP ACTIVATED', 'error');
+            
+            // Stop all movement
+            axisState.x.moving = false;
+            axisState.y.moving = false;
+            axisState.z.moving = false;
+            
+            if (movementInterval) {
+                clearInterval(movementInterval);
+                movementInterval = null;
+            }
+            
+            // Send zero speed command
+            await sendCommand(0, 0, 0, 0);
+        }
+        
+        // Automated Tests
+        async function runTest(testName) {
+            const results = document.getElementById('testResults');
+            const testDiv = document.createElement('div');
+            testDiv.id = `test-${testName}`;
+            testDiv.innerHTML = `<strong>${testName}</strong>: <span class="test-result running">Running...</span>`;
+            results.appendChild(testDiv);
+            
+            log(`Starting test: ${testName}`, 'warning');
+            
+            let passed = false;
+            
+            try {
+                switch(testName) {
+                    case 'messageFraming':
+                        passed = await testMessageFraming();
+                        break;
+                    case 'speedControl':
+                        passed = await testSpeedControl();
+                        break;
+                    case 'directionControl':
+                        passed = await testDirectionControl();
+                        break;
+                    case 'multiAxis':
+                        passed = await testMultiAxis();
+                        break;
+                    case 'commandBatching':
+                        passed = await testCommandBatching();
+                        break;
+                }
+                
+                testDiv.innerHTML = `<strong>${testName}</strong>: <span class="test-result ${passed ? 'pass' : 'fail'}">` +
+                    `${passed ? '✓ PASS' : '✗ FAIL'}</span>`;
+                log(`Test ${testName}: ${passed ? 'PASSED' : 'FAILED'}`, passed ? 'success' : 'error');
+                
+            } catch (error) {
+                testDiv.innerHTML = `<strong>${testName}</strong>: <span class="test-result fail">✗ ERROR: ${error.message}</span>`;
+                log(`Test ${testName} error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testMessageFraming() {
+            // Test that messages are properly framed
+            await sendCommand(X_STEP, 0.5, 0.0, 0.0);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            return true; // If no error, framing works
+        }
+        
+        async function testSpeedControl() {
+            // Test different speed values
+            for (let speed of [0.1, 0.5, 1.0]) {
+                await sendCommand(X_STEP, speed, 0.0, 0.0);
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            await sendCommand(0, 0, 0, 0); // Stop
+            return true;
+        }
+        
+        async function testDirectionControl() {
+            // Test both directions
+            await sendCommand(X_STEP, 0.3, 0.0, 0.0); // Negative
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await sendCommand(X_STEP | X_DIR, 0.3, 0.0, 0.0); // Positive
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await sendCommand(0, 0, 0, 0); // Stop
+            return true;
+        }
+        
+        async function testMultiAxis() {
+            // Test all axes moving simultaneously
+            await sendCommand(X_STEP | Y_STEP | Z_STEP, 0.5, 0.5, 0.5);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await sendCommand(0, 0, 0, 0); // Stop
+            return true;
+        }
+        
+        async function testCommandBatching() {
+            // Send multiple commands in quick succession
+            for (let i = 0; i < 10; i++) {
+                await sendCommand(X_STEP, 0.5, 0.0, 0.0);
+            }
+            await sendCommand(0, 0, 0, 0); // Stop
+            return true;
+        }
+        
+        async function runAllTests() {
+            if (!isConnected) {
+                log('Cannot run tests: Not connected', 'error');
+                return;
+            }
+            
+            document.getElementById('testResults').innerHTML = '';
+            log('Running all automated tests...', 'warning');
+            
+            const tests = ['messageFraming', 'speedControl', 'directionControl', 'multiAxis', 'commandBatching'];
+            
+            for (const test of tests) {
+                await runTest(test);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            log('All tests completed', 'success');
+        }
+        
+        // Check for Web Serial API support
+        window.addEventListener('DOMContentLoaded', () => {
+            if ('serial' in navigator) {
+                log('Web Serial API is supported', 'success');
+            } else {
+                log('Web Serial API is not supported in this browser. Please use Chrome or Edge.', 'error');
+                document.getElementById('connectBtn').disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
+

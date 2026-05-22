@@ -50,7 +50,7 @@ class MujocoSimulation:
         print("Setting up MuJoCo simulation...")  # This will be captured
         self.model = mujoco.MjModel.from_xml_path("/home/fari/Documents/demo-fari-brickiebot/simulation/briekiebot.xml")
         self.data = mujoco.MjData(self.model)
-        self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_right_ui=True, show_left_ui=False)
+        self.viewer = mujoco.viewer.launch_passive(self.model, self.data, show_right_ui=True, show_left_ui=True)
         print(dir(self.viewer))
         print("Simulation initialized successfully")  # This will be captured
         self.lite6_mujoco = self.model.body('link_base')
