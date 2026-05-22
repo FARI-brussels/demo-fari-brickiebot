@@ -1,0 +1,15 @@
+*.bin
+*.gltf
+*.step
+*.stl
+*.STEP
+*.igs
+*.stp
+*.IGS
+!input_models/
+!input_models/Nema17.step
+!input_models/gt2-80tooth-8mm-shaft-6mm-belt.stl
+!input_models/myCobotMK1.IGS
+!input_models/Motedis Profile 20x20 B-Type slot 6.stp
+!input_models/Motedis Profile 20x40 B-Type slot 6.stp
+!input_models/Motedis_roller_29mm_slot6.STEP

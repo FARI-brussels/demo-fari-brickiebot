@@ -13,7 +13,7 @@ model = mujoco.MjModel.from_xml_path("briekiebot.xml")
 data = mujoco.MjData(model)
 
 lite6_mujoco = model.body('link_base')
-lite6_mujoco.pos = [-0.3, 0, 0]
+lite6_mujoco.pos = [0,0.2, 0.0922]
 lite6_rtb =  rtb.models.URDF.Lite6()
 #lite6_rtb.base = lite6_rtb.base*SE3.Ty(0)
 moving_robot = False
@@ -89,14 +89,27 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                 viewer.sync()
             data.ctrl[:6] = [0]*6
             print(arrived)
-        
-        data.ctrl[-2:]=[v[0], v[1]]
+
+            
+        if keys[pygame.K_m]:
+            #joint_id = model.joint_name2id('clamp_joint')
+            joint_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, 'clamp_joint')
+            print(joint_id)
+            model.jnt_range[joint_id] = [0, 0]  # Lock joint
+            #model.body('brick').pos = data.body("clamp").xpos
+            
+
+
+        print(data.body("clamp").xpos)
+        #data.ctrl[-3:-1]=[v[0], v[1]]
         model.body('crane_body').pos += [v[1],0,0]
         model.body('end_effector').pos += [0,v[0],0]
-        
+        data.ctrl[9]=1
         mujoco.mj_step(model, data)
         viewer.sync()
-        #time.sleep(model.opt.timestep)
+
+
+
             
     
 def grab_brick():

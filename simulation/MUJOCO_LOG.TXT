@@ -7,6 +7,7 @@ WARNING: Nan, Inf or huge value in QACC at DOF 58. The simulation is unstable. T
 Mon Feb  3 15:51:53 2025
 WARNING: Nan, Inf or huge value in QACC at DOF 72. The simulation is unstable. Time = 26.6270.
 
+<<<<<<< HEAD
 Fri Feb 14 13:47:44 2025
 WARNING: Nan, Inf or huge value in QACC at DOF 24. The simulation is unstable. Time = 13.7540.
 
@@ -33,4 +34,17 @@ ERROR: could not create window
 
 Tue May 19 11:02:14 2026
 WARNING: Nan, Inf or huge value in QACC at DOF 30. The simulation is unstable. Time = 321.2340.
+=======
+Thu Feb  6 16:13:01 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 192. The simulation is unstable. Time = 0.6550.
+
+Thu Feb  6 16:13:01 2025
+WARNING: Inertia matrix is too close to singular at DOF 13. Check model. Time = 0.0000.
+
+Tue Feb 18 14:30:35 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 24. The simulation is unstable. Time = 1.2150.
+
+Fri Feb 28 16:26:29 2025
+WARNING: Nan, Inf or huge value in QACC at DOF 182. The simulation is unstable. Time = 0.4760.
+>>>>>>> bb7804fac22e218610067326abb9f5a4a4aa7ad4
 

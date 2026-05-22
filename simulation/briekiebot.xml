@@ -1,5 +1,5 @@
 <mujoco model="cassie">
-  <include file="lite6_gripper_wide.xml"/>
+  <include file="mycobot_280jn_mujoco.xml"/>
   <compiler meshdir="assets" texturedir="assets" autolimits="true" angle="degree"/>
   <option integrator="implicitfast"/>
   <extension>
@@ -22,6 +22,7 @@
     <mesh name="end_effector"       scale="0.001 0.001 0.001" file="end_effector.stl"/>
     <mesh name="rails"              scale="0.001 0.001 0.001" file="rails.stl"/>
     <mesh name="pulley"              scale="0.001 0.001 0.001" file="pulley.stl"/>
+    <mesh name="robot_carriage"              scale="0.001 0.001 0.001" file="robot_carriage.stl"/>
     <mesh name="bent_stripe"         scale="0.001 0.001 0.001" file="clamp/stripe_jaw.stl"/>
     <mesh name="latte1"              scale="0.001 0.001 0.001" file="clamp/latte1.stl"/>
     <mesh name="latte2"              scale="0.001 0.001 0.001" file="clamp/latte2.stl"/>
@@ -35,31 +36,38 @@
   </asset>
 
   <worldbody>
+  
     <geom size="2 2 .01" type="plane" material="grid"/>
-    <site name="target" pos="0 0 0" size="0.02" rgba="1 0 0 1"/>
     <light pos="0 0 2" castshadow="false"/>
-
-    <body name="link_1" pos="0.5 -0.04 0.695">
-        <joint type="free" damping="0.005"/>
-        <geom type="mesh" mesh="latte1" pos="0 0 0" euler="0 90 0" material="white__" />
-            <body name="link_2" pos="0.005 0 -0.04" euler="0 0 0">
+    
+    <body name="clamp" pos="0.585 -0.04 0.71">
+      <joint name="clamp_joint" type="free" damping="0.001"/>
+        <geom type="mesh" mesh="latte1" pos="0 0 -0.04" euler="0 90 0" material="white__" contype="1" conaffinity="1" condim="1"/>
+            <body name="link_2" pos="0.005 0 -0.08" euler="0 0 0">
                 <joint name="hinge_1" pos="0 0 0" axis="1 0 0" damping="1"/>
-                <geom type="mesh" mesh="bent_stripe" pos="0 0.08 0" euler="0 90 90" material="white__" />
+                <geom type="mesh" mesh="bent_stripe" pos="0 0.08 0" euler="0 90 90" material="white__" contype="1" conaffinity="1" condim="1"/>
                 <body name="link_3" pos="-0.005 0.04 0" euler="0 0 0">
                     <joint name="hinge_2" pos="0 0.04 0"  axis="1 0 0" damping="1"/>
-                    <geom type="mesh" mesh="bent_stripe" pos="0 0.04 0" euler="0 -90 180" material="white__" />
+                    <geom type="mesh" mesh="bent_stripe" pos="0 0.04 0" euler="0 -90 180" material="white__" contype="1" conaffinity="1" condim="1"/>
                     <body name="link_4" pos="0.005 0 0.04" euler="0 0 0">
                         <joint name="hinge_3" pos="0 0.04 0.04" axis="1 0 0" damping="1"/>
-                        <geom type="mesh" mesh="latte1" pos="0 0 0.04" euler="90 90 0" material="white__" />
+                        <geom type="mesh" mesh="latte1" pos="0 0 0.04" euler="90 90 0" material="white__" contype="1" conaffinity="1" condim="1"/>
                     </body>
                 </body>
             </body>
       </body>
 
+
+
+
     <body name="shaft_structure">
       <body name="rails" pos="0 0 0">
         <geom type="mesh" mesh="rails"/>
       </body>
+      <body name="robot_carriage" pos="0 0 0">
+        <geom type="mesh" mesh="robot_carriage"/>
+      </body>
+
       <body name="crane_body" pos="0 0 0">
         
         <joint name="y_slide" type="slide" axis="0 1 0" damping="10" />
@@ -71,7 +79,7 @@
           <body name="shaft" pos="0 0 0">
             <joint name="z_up" axis="0 1 0" damping="10" pos="0 -0.04 0.68401"/>
             <geom type="mesh" mesh="pulley" contype="1" conaffinity="1" condim="1"/>
-            <composite type="cable" curve="s" count="60 1 1" size="0.5" offset="0 -0.04 0.71" initial="none">
+            <composite type="cable" curve="s" count="60 1 1" size="0.6" offset="0 -0.04 0.71" initial="none">
               <plugin plugin="mujoco.elasticity.cable">
                 <!--Units are in Pa (SI)-->
                 <config key="twist" value="0"/>
@@ -85,6 +93,15 @@
         </body>
       </body>
     </body>
+
+  <body name="brick">
+    <geom type="box" size="0.04 0.0225 0.0225" pos="0 0 0.0225" rgba="0.8 0.2 0.1 1" contype="1" conaffinity="1" condim="1"/>
+  </body>
+
+  <site name="site" pos="0 0 0" size="0.01" rgba="0 1 0 1"/>
+
+
+
   </worldbody>
   <actuator>
     <intvelocity name="y" joint="y_slide" kp="1000" kv="100" actrange="-2 2" ctrllimited="true" ctrlrange="-0.1 0.1"/>
@@ -95,16 +112,16 @@
 
 
   <equality>
-    <connect name="right_boundary" body1="B_last" body2="link_1" anchor="0 0 0"/>
-    <connect name="left_boundary" body1="B_first" body2="shaft" anchor="0 0 0"/>
-    <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 0.04" />
+    <connect name="right_boundary" body1="B_last" body2="clamp" anchor="0 0 0"/>
+    <connect name="left_boundary" body1="B_first" body2="shaft" anchor="0 0 0" />
+    <connect name="kinematic_link" active="true" body1="clamp" body2="link_4" anchor="0 0 0" />
   </equality>
   <contact>
-    <exclude body1="B_last" body2="link_1"/>
+    <exclude body1="B_last" body2="clamp"/>
     <exclude body1="rails" body2="crane_body"/>
-    <exclude body1="link_1" body2="link_2"/>
-    <exclude body1="link_1" body2="link_3"/>
-    <exclude body1="link_1" body2="link_4"/>
+    <exclude body1="clamp" body2="link_2"/>
+    <exclude body1="clamp" body2="link_3"/>
+    <exclude body1="clamp" body2="link_4"/>
     <exclude body1="link_2" body2="link_3"/>
     <exclude body1="link_2" body2="link_4"/>
     <exclude body1="link_3" body2="link_4"/>
