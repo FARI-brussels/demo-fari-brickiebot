@@ -15,8 +15,8 @@
     </asset>
     <worldbody>
         <body name="link_1" >
-            <geom type="mesh" mesh="latte1" pos="0 0 0" euler="0 90 0" material="red__" />
-            <body name="link_2" pos="0.005 0 -0.04" euler="0 0 0">
+            <geom type="mesh" mesh="latte1" pos="0 0 -0.04" euler="0 90 0" material="red__" />
+            <body name="link_2" pos="0.005 0 -0.08" euler="0 0 0">
                 <joint name="hinge_1" pos="0 0 0" axis="1 0 0" damping="10"/>
                 <geom type="mesh" mesh="bent_stripe" pos="0 0.08 0" euler="0 90 90" material="blue_" />
                 <body name="link_3" pos="-0.005 0.04 0" euler="0 0 0">
@@ -32,7 +32,7 @@
 
     </worldbody>
     <equality>
-        <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 0.04" />
+        <connect name="kinematic_link" active="true" body1="link_1" body2="link_4" anchor="0 0 0" />
     </equality>
     <actuator>
         <position joint="hinge_2" kp="10" kv="2" name="actuator_motor" ctrlrange="-2 1" ctrllimited="true"/>
